@@ -6,7 +6,7 @@ from policy.models import Policy
 
 class Premium(models.Model):
     id = models.AutoField(db_column='PremiumId', primary_key=True)
-    uuid = models.UUIDField(db_column='PremiumUUID', default=uuid.uuid4, unique = True)
+    uuid = models.CharField(db_column='PremiumUUID', max_length=36, default=uuid.uuid4, unique = True)
     legacy_id = models.IntegerField(
         db_column='LegacyID', blank=True, null=True)
     policy_id = models.ForeignKey(
