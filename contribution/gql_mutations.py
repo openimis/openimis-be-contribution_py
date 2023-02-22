@@ -49,9 +49,10 @@ def reset_premium_before_update(premium):
 
 
 def update_or_create_premium(data, user):
-    if "uuid" in data:
+    uuid = data.pop('uuid', None)
+    if uuid:
         incoming_premium_receipt = data['receipt']
-        current_premium_receipt = Premium.objects.get(uuid=data['uuid']).receipt
+        current_premium_receipt = Premium.objects.get(uuid=uuid).receipt
         if current_premium_receipt != incoming_premium_receipt:
             if check_unique_premium_receipt_code_within_product(code=data['receipt'], policy_uuid=data['policy_uuid']):
                 raise ValidationError(
