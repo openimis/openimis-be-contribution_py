@@ -12,6 +12,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils.translation import gettext as _
 from core import datetime
+from policy.services import PolicyService
 from .services import check_unique_premium_receipt_code_within_product
 import logging
 
@@ -81,6 +82,18 @@ def update_or_create_premium(data, user):
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
     payer = Payer.filter_queryset().filter(uuid=payer_uuid).first() if payer_uuid else None
+
+    payment_balance = policy.value - policy.sum_premiums()
+    if not premium_uuid:
+        payment_balance -= data["amount"]
+    if payment_balance >= 0:
+        policy.effective_date = data["pay_date"]
+        # Start date is Enrolment Date if the policy is paid later
+        if data["pay_date"] > policy.start_date:
+            days_delayed = policy.enroll_date - policy.start_date
+            policy.start_date = policy.enroll_date
+            policy.expiry_date = policy.enroll_date + days_delayed
+        policy.save()
     if premium_uuid:
         premium = Premium.objects.get(uuid=premium_uuid)
         premium.save_history()
