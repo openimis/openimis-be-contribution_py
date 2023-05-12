@@ -51,7 +51,7 @@ class Premium(core_models.VersionedModel):
     # rowid = models.TextField(db_column='RowID', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'tblPremium'
 
 
