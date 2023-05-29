@@ -1,3 +1,4 @@
+import graphene
 from django.db.models import Q
 import graphene_django_optimizer as gql_optimizer
 
@@ -14,6 +15,7 @@ from .services import check_unique_premium_receipt_code_within_product
 class Query(graphene.ObjectType):
     premiums = OrderedDjangoFilterConnectionField(
         PremiumGQLType,
+        payer_id=graphene.ID(),
         client_mutation_id=graphene.String(),
         show_history=graphene.Boolean(),
         parent_location=graphene.String(),
@@ -31,12 +33,14 @@ class Query(graphene.ObjectType):
         policy_uuid=graphene.String(required=True),
         description="Checks that the specified premium code is unique for a given policy."
     )
-
     def resolve_premiums(self, info, **kwargs):
         if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
             raise PermissionDenied(_("unauthorized"))
         filters = []
         client_mutation_id = kwargs.get("client_mutation_id", None)
+        payer_id = kwargs.get("payer_id", None)
+        if payer_id:
+            filters.append(Q(payer__id=payer_id))
         if client_mutation_id:
             filters.append(Q(mutations__mutation__client_mutation_id=client_mutation_id))
         show_history = kwargs.get('show_history', False)
