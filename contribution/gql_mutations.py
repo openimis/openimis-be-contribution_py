@@ -92,7 +92,7 @@ def update_or_create_premium(data, user):
         if data["pay_date"] > policy.start_date:
             days_delayed = policy.enroll_date - policy.start_date
             policy.start_date = policy.enroll_date
-            policy.expiry_date = policy.enroll_date + days_delayed
+            policy.expiry_date = policy.start_date + days_delayed
         policy.save()
     if premium_uuid:
         premium = Premium.objects.get(uuid=premium_uuid)
