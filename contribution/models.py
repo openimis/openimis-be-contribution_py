@@ -33,7 +33,8 @@ class Premium(core_models.VersionedModel):
         null=True,
         related_name="premiums",
     )
-    amount = models.DecimalField(db_column="Amount", max_digits=18, decimal_places=2)
+    amount = models.DecimalField(
+        db_column="Amount", max_digits=18, decimal_places=2)
     receipt = models.CharField(db_column="Receipt", max_length=50)
     pay_date = fields.DateField(db_column="PayDate")
     pay_type = models.CharField(
@@ -45,10 +46,23 @@ class Premium(core_models.VersionedModel):
     is_offline = models.BooleanField(
         db_column="isOffline", blank=True, null=True, default=False
     )
-    reporting_id = models.IntegerField(db_column="ReportingId", blank=True, null=True)
+    reporting_id = models.IntegerField(
+        db_column="ReportingId", blank=True, null=True)
+    reporting_commission_id = models.IntegerField(
+        db_column="ReportingCommissionID", blank=True, null=True)
+    overview_commission_report = models.DateTimeField(
+        db_column="OverviewCommissionReport", blank=True, null=True)
+    all_details_commission_report = models.DateTimeField(
+        db_column="AllDetailsCommissionReport", blank=True, null=True)
+    source = models.CharField(
+        db_column="Source", max_length=50, blank=True, null=True)
+    source_version = models.CharField(
+        db_column="SourceVersion", max_length=15, blank=True, null=True)
+
     audit_user_id = models.IntegerField(db_column="AuditUserID")
-    created_date = models.DateTimeField(db_column="CreatedDate", default=datetime.now)
-    # rowid = models.TextField(db_column='RowID', blank=True, null=True)
+    created_date = models.DateTimeField(
+        db_column="CreatedDate", default=datetime.now)
+    rowid = models.TextField(db_column='RowID', blank=True, null=True)
 
     class Meta:
         managed = True
@@ -56,8 +70,10 @@ class Premium(core_models.VersionedModel):
 
 
 class PremiumMutation(core_models.UUIDModel, core_models.ObjectMutation):
-    premium = models.ForeignKey(Premium, models.DO_NOTHING, related_name='mutations')
-    mutation = models.ForeignKey(core_models.MutationLog, models.DO_NOTHING, related_name='premiums')
+    premium = models.ForeignKey(
+        Premium, models.DO_NOTHING, related_name='mutations')
+    mutation = models.ForeignKey(
+        core_models.MutationLog, models.DO_NOTHING, related_name='premiums')
 
     class Meta:
         managed = True
