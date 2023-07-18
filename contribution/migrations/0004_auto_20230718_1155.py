@@ -27,11 +27,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='premium',
-            name='rowid',
-            field=models.TextField(blank=True, db_column='RowID', null=True),
-        ),
-        migrations.AddField(
-            model_name='premium',
             name='source',
             field=models.CharField(blank=True, db_column='Source', max_length=50, null=True),
         ),
