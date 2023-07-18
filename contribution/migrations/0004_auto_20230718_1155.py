@@ -7,6 +7,7 @@ from django.db.migrations import RunPython
 def add_field_for_psql(apps, schema_editor):
     # Add field only for PostgreSQL
     if schema_editor.connection.vendor == 'postgresql':
+        print("FIELDS ADDED CONFIRMED ")
         migrations.AddField(
             model_name='premium',
             name='all_details_commission_report',
