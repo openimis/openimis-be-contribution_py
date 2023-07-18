@@ -11,17 +11,17 @@ def add_field_for_psql(apps, schema_editor):
             model_name='premium',
             name='all_details_commission_report',
             field=models.DateTimeField(blank=True, db_column='AllDetailsCommissionReport', null=True),
-        ).database_forwards(apps, schema_editor, from_state=None, to_state=None)
+        )
         migrations.AddField(
             model_name='premium',
             name='overview_commission_report',
             field=models.DateTimeField(blank=True, db_column='OverviewCommissionReport', null=True),
-        ).database_forwards(apps, schema_editor, from_state=None, to_state=None)
+        )
         migrations.AddField(
             model_name='premium',
             name='reporting_commission_id',
             field=models.IntegerField(blank=True, db_column='ReportingCommissionID', null=True),
-        ).database_forwards(apps, schema_editor, from_state=None, to_state=None)
+        )
 
 
 def remove_field_for_psql(apps, schema_editor):
@@ -30,28 +30,25 @@ def remove_field_for_psql(apps, schema_editor):
         migrations.RemoveField(
             model_name='premium',
             name='all_details_commission_report',
-        ).database_forwards(apps, schema_editor, from_state=None, to_state=None)
+        )
         migrations.RemoveField(
             model_name='premium',
             name='overview_commission_report',
-        ).database_forwards(apps, schema_editor, from_state=None, to_state=None)
+        )
         migrations.RemoveField(
             model_name='premium',
             name='reporting_commission_id',
-        ).database_forwards(apps, schema_editor, from_state=None, to_state=None)
+        )
 
 
-
-
-
-class ConditionalOperation(migrations.RunPython):
-    def database_forwards(self, app_label, schema_editor, from_state, to_state):
-        if schema_editor.connection.vendor == 'postgresql':
-            self.code(from_state.apps, schema_editor)
-
-    def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        if schema_editor.connection.vendor == 'postgresql':
-            self.reverse_code(from_state.apps, schema_editor)
+# class ConditionalOperation(migrations.RunPython):
+#     def database_forwards(self, app_label, schema_editor, from_state, to_state):
+#         if schema_editor.connection.vendor == 'postgresql':
+#             self.code(from_state.apps, schema_editor)
+#
+#     def database_backwards(self, app_label, schema_editor, from_state, to_state):
+#         if schema_editor.connection.vendor == 'postgresql':
+#             self.reverse_code(from_state.apps, schema_editor)
 
 
 class Migration(migrations.Migration):
@@ -62,5 +59,5 @@ class Migration(migrations.Migration):
     # For MSSQL This changes were added through raw sql, to keep consistency with existing databases it couldn't be
     # changed in postgres sql script.
     operations = [
-        ConditionalOperation(add_field_for_psql, remove_field_for_psql),
+        migrations.RunPython(add_field_for_psql, remove_field_for_psql, hints={"target_db": "default"}),
     ]
