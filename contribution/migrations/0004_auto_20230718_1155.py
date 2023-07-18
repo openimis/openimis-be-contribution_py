@@ -41,16 +41,6 @@ def remove_field_for_psql(apps, schema_editor):
         )
 
 
-# class ConditionalOperation(migrations.RunPython):
-#     def database_forwards(self, app_label, schema_editor, from_state, to_state):
-#         if schema_editor.connection.vendor == 'postgresql':
-#             self.code(from_state.apps, schema_editor)
-#
-#     def database_backwards(self, app_label, schema_editor, from_state, to_state):
-#         if schema_editor.connection.vendor == 'postgresql':
-#             self.reverse_code(from_state.apps, schema_editor)
-
-
 class Migration(migrations.Migration):
     dependencies = [
         ('contribution', '0003_alter_premium_options'),
