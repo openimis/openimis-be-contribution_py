@@ -1,5 +1,3 @@
-from claim.reports import claim_percentage_referrals
-from claim.reports.claim_percentage_referrals import claim_percentage_referrals_query
 from contribution.reports import premium_collection
 from contribution.reports.premium_collection import premium_collection_query
 
