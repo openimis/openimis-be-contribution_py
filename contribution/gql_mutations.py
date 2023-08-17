@@ -108,6 +108,10 @@ def update_or_create_premium(data, user):
     if payer_uuid and payer:
         premium.payer = payer
         premium.save()
+
+    if premium.amount > policy.value:
+        raise ValidationError(_("mutation.contribution_amount_greater_than_policy_value"))
+
     # Handle the policy updating
     premium_updated(premium, action)
     return premium
