@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('contribution', '0002_add_premium_fields'),
+        ('contribution', '0004_auto_20230718_1155'),
         ('payer', '0001_initial'),
         ('policy', '0004_add_medical_oficer_reading_rights'),
     ]
