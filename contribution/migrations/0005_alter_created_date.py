@@ -12,37 +12,37 @@ class Migration(migrations.Migration):
         ('policy', '0004_add_medical_oficer_reading_rights'),
     ]
 
-        operations = [
-              migrations.AddField(
-                    model_name='premium',
-                    name='all_details_commission_report',
-                    field=models.DateTimeField(blank=True, db_column='AllDetailsCommissionReport', null=True),
-                ),
-                migrations.AddField(
-                    model_name='premium',
-                    name='overview_commission_report',
-                    field=models.DateTimeField(blank=True, db_column='OverviewCommissionReport', null=True),
-                ),
-                migrations.AddField(
-                    model_name='premium',
-                    name='reporting_commission_id',
-                    field=models.IntegerField(blank=True, db_column='ReportingCommissionID', null=True),
-                ),
-                migrations.AddField(
-                    model_name='premium',
-                    name='rowid',
-                    field=models.TextField(blank=True, db_column='RowID', null=True),
-                ),
-                migrations.AddField(
-                    model_name='premium',
-                    name='source',
-                    field=models.CharField(blank=True, db_column='Source', max_length=50, null=True),
-                ),
-                migrations.AddField(
-                    model_name='premium',
-                    name='source_version',
-                    field=models.CharField(blank=True, db_column='SourceVersion', max_length=15, null=True),
-                ),
+    operations = [
+          migrations.AddField(
+                model_name='premium',
+                name='all_details_commission_report',
+                field=models.DateTimeField(blank=True, db_column='AllDetailsCommissionReport', null=True),
+            ),
+            migrations.AddField(
+                model_name='premium',
+                name='overview_commission_report',
+                field=models.DateTimeField(blank=True, db_column='OverviewCommissionReport', null=True),
+            ),
+            migrations.AddField(
+                model_name='premium',
+                name='reporting_commission_id',
+                field=models.IntegerField(blank=True, db_column='ReportingCommissionID', null=True),
+            ),
+            migrations.AddField(
+                model_name='premium',
+                name='rowid',
+                field=models.TextField(blank=True, db_column='RowID', null=True),
+            ),
+            migrations.AddField(
+                model_name='premium',
+                name='source',
+                field=models.CharField(blank=True, db_column='Source', max_length=50, null=True),
+            ),
+            migrations.AddField(
+                model_name='premium',
+                name='source_version',
+                field=models.CharField(blank=True, db_column='SourceVersion', max_length=15, null=True),
+            ),
     ]
     if settings.MSSQL:
         operations.append(
