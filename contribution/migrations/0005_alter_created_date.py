@@ -51,5 +51,6 @@ class Migration(migrations.Migration):
                 name='created_date',
                 field=models.DateTimeField(db_column='CreatedDate', default=core.datetimes.ad_datetime.AdDatetime.now),
             )
+        )
         
 
