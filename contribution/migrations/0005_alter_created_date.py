@@ -13,21 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-          migrations.AddField(
-                model_name='premium',
-                name='all_details_commission_report',
-                field=models.DateTimeField(blank=True, db_column='AllDetailsCommissionReport', null=True),
-            ),
-            migrations.AddField(
-                model_name='premium',
-                name='overview_commission_report',
-                field=models.DateTimeField(blank=True, db_column='OverviewCommissionReport', null=True),
-            ),
-            migrations.AddField(
-                model_name='premium',
-                name='reporting_commission_id',
-                field=models.IntegerField(blank=True, db_column='ReportingCommissionID', null=True),
-            ),
             migrations.AddField(
                 model_name='premium',
                 name='rowid',
@@ -44,7 +29,7 @@ class Migration(migrations.Migration):
                 field=models.CharField(blank=True, db_column='SourceVersion', max_length=15, null=True),
             ),
     ]
-    if settings.MSSQL:
+    if not settings.MSSQL:
         operations.append(
             migrations.AlterField(
                 model_name='premium',
