@@ -13,12 +13,15 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-            migrations.AddField(
+            
+    ]
+    if settings.MSSQL:
+        operations.append(
+            migrations.AlterField(
                 model_name='premium',
-                name='rowid',
-                field=models.TextField(blank=True, db_column='RowID', null=True),
-            ),
-            migrations.AddField(
+                name='created_date',
+                field=models.DateTimeField(db_column='CreatedDate', default=core.datetimes.ad_datetime.AdDatetime.now),
+            ),migrations.AddField(
                 model_name='premium',
                 name='source',
                 field=models.CharField(blank=True, db_column='Source', max_length=50, null=True),
@@ -28,14 +31,7 @@ class Migration(migrations.Migration):
                 name='source_version',
                 field=models.CharField(blank=True, db_column='SourceVersion', max_length=15, null=True),
             ),
-    ]
-    if not settings.MSSQL:
-        operations.append(
-            migrations.AlterField(
-                model_name='premium',
-                name='created_date',
-                field=models.DateTimeField(db_column='CreatedDate', default=core.datetimes.ad_datetime.AdDatetime.now),
-            )
+
         )
         
 
