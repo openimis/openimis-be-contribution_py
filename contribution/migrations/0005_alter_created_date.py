@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             
     ]
     if settings.MSSQL:
-        operations.append(
+        operations=[
             migrations.AlterField(
                 model_name='premium',
                 name='created_date',
@@ -32,6 +32,6 @@ class Migration(migrations.Migration):
                 field=models.CharField(blank=True, db_column='SourceVersion', max_length=15, null=True),
             ),
 
-        )
+        ]
         
 
