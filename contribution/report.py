@@ -1,4 +1,5 @@
-from contribution.reports import premium_collection, payment_category_overview
+from contribution.reports import premium_collection, payment_category_overview, contributions_distribution
+from contribution.reports.contributions_distribution import contributions_distribution_query
 from contribution.reports.payment_category_overview import payment_category_overview_query
 from contribution.reports.premium_collection import premium_collection_query
 
@@ -20,5 +21,14 @@ report_definitions = [
         "module": "contribution",
         "python_query": payment_category_overview_query,
         "permission": ["131211"],
+    },
+    {
+        "name": "contributions_distribution",
+        "engine": 0,
+        "default_report": contributions_distribution.template,
+        "description": "Contributions distribution",
+        "module": "contribution",
+        "python_query": contributions_distribution_query,
+        "permission": ["131206"],
     },
 ]
