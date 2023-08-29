@@ -1136,7 +1136,7 @@ template = """
                             "elementType": "table_text",
                             "id": 258,
                             "width": 42,
-                            "content": "${location_name} if ${location_type} == 'N' else (${location_code} + ' - ' + ${location_name})",
+                            "content": "${location_name} if ${location_type} == 'N' else ('Region ' + ${location_code} + ' - ' + ${location_name} if ${location_type} == 'R' else ('District ' + ${location_code} + ' - ' + ${location_name}))",
                             "eval": true,
                             "colspan": "9",
                             "styleId": "286",
