@@ -21,15 +21,6 @@ class Migration(migrations.Migration):
                 model_name='premium',
                 name='created_date',
                 field=models.DateTimeField(db_column='CreatedDate', default=core.datetimes.ad_datetime.AdDatetime.now),
-            ),migrations.AddField(
-                model_name='premium',
-                name='source',
-                field=models.CharField(blank=True, db_column='Source', max_length=50, null=True),
-            ),
-            migrations.AddField(
-                model_name='premium',
-                name='source_version',
-                field=models.CharField(blank=True, db_column='SourceVersion', max_length=15, null=True),
             ),
 
         ]
