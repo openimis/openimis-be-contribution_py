@@ -13,16 +13,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-            
+            migrations.RemoveField(
+            model_name='premium',
+            name='row_id',
+            manage=False
+        ),
     ]
     if settings.MSSQL:
-        operations=[
+        operations.append(
             migrations.AlterField(
                 model_name='premium',
                 name='created_date',
                 field=models.DateTimeField(db_column='CreatedDate', default=core.datetimes.ad_datetime.AdDatetime.now),
-            ),
-
-        ]
+            ))
         
 
