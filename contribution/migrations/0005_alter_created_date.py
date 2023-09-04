@@ -8,21 +8,20 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('contribution', '0004_auto_20230718_1155'),
-        ('payer', '0001_initial'),
-        ('policy', '0004_add_medical_oficer_reading_rights'),
     ]
 
     operations = [
-            
+            migrations.RemoveField(
+            model_name='premium',
+            name='row_id',
+        ),
     ]
     if settings.MSSQL:
-        operations=[
+        operations.append(
             migrations.AlterField(
                 model_name='premium',
                 name='created_date',
                 field=models.DateTimeField(db_column='CreatedDate', default=core.datetimes.ad_datetime.AdDatetime.now),
-            ),
-
-        ]
+            ))
         
 
