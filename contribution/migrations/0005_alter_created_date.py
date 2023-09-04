@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             migrations.RemoveField(
             model_name='premium',
             name='row_id',
-            manage=False
+            managed=False
         ),
     ]
     if settings.MSSQL:
