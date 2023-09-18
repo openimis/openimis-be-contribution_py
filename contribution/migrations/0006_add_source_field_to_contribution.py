@@ -3,6 +3,8 @@
 from django.conf import settings
 from django.db import migrations, models
 
+from contribution.models import Premium
+
 
 class AddFieldPostgres(migrations.AddField):
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
@@ -36,7 +38,7 @@ class Migration(migrations.Migration):
             ),
             AddFieldPostgres(
                 model_name='premium',
-                name='source',
+                name='source_version',
                 field=models.CharField(db_column="SourceVersion", max_length=15, blank=True, null=True)
             ),
         ]
