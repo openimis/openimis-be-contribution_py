@@ -20,7 +20,6 @@ class AddFieldPostgres(migrations.AddField):
         return "Wrapper for AddField that works only for postgres database engine."
 
 
-
 class Migration(migrations.Migration):
     dependencies = [
         ('contribution', '0005_alter_created_date'),
@@ -30,15 +29,19 @@ class Migration(migrations.Migration):
     # changed in postgres sql script.
     operations = []
     if not settings.MSSQL:
-        operations = [
-            AddFieldPostgres(
-                model_name='premium',
-                name='source',
-                field=models.CharField(db_column="Source", max_length=50, blank=True, null=True),
-            ),
-            AddFieldPostgres(
-                model_name='premium',
-                name='source_version',
-                field=models.CharField(db_column="SourceVersion", max_length=15, blank=True, null=True)
-            ),
-        ]
+        if not hasattr(Premium, 'source'):
+            operations.append(
+                AddFieldPostgres(
+                    model_name='premium',
+                    name='source',
+                    field=models.CharField(db_column="Source", max_length=50, blank=True, null=True),
+                )
+            )
+        if not hasattr(Premium, 'source_version'):
+            operations.append(
+                AddFieldPostgres(
+                    model_name='premium',
+                    name='source_version',
+                    field=models.CharField(db_column="SourceVersion", max_length=15, blank=True, null=True)
+                )
+            )
