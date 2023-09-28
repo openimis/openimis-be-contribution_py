@@ -4,7 +4,6 @@ from django.conf import settings
 from django.db import migrations, models
 
 from contribution.models import Premium
-from contribution.utils import AddFieldPostgres
 
 
 class Migration(migrations.Migration):
@@ -15,20 +14,23 @@ class Migration(migrations.Migration):
     # For MSSQL These changes were added through raw sql, to keep consistency with existing databases it couldn't be
     # changed in postgres sql script.
     operations = []
-    if not settings.MSSQL:
-        if not hasattr(Premium, 'source'):
-            operations.append(
-                AddFieldPostgres(
-                    model_name='premium',
-                    name='source',
-                    field=models.CharField(db_column="Source", max_length=50, blank=True, null=True),
-                )
+    try:
+        Premium.objects.all().aggregate(sum=models.Count('source'))
+    except:
+        operations.append(
+            migrations.AddField(
+                model_name='premium',
+                name='source',
+                field=models.CharField(db_column="Source", max_length=50, blank=True, null=True),
             )
-        if not hasattr(Premium, 'source_version'):
-            operations.append(
-                AddFieldPostgres(
-                    model_name='premium',
-                    name='source_version',
-                    field=models.CharField(db_column="SourceVersion", max_length=15, blank=True, null=True)
-                )
+        )
+    try:
+        Premium.objects.all().aggregate(sum=models.Count('source_version'))
+    except:
+        operations.append(
+            migrations.AddField(
+                model_name='premium',
+                name='source_version',
+                field=models.CharField(db_column="SourceVersion", max_length=15, blank=True, null=True)
             )
+        )
