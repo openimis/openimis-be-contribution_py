@@ -9,9 +9,7 @@ from location.apps import LocationConfig
 from location.models import Location
 from policy.models import Policy
 from policy.services import policy_status_premium_paid
-from django.utils.translation import gettext as _
 
-from mobile_payment.api_request import initiate_request
 from .models import Premium, PayTypeChoices
 
 logger = logging.getLogger(__name__)
@@ -58,7 +56,7 @@ def last_date_for_payment(policy_id):
     else:
         # Calculate on Free Cycle
         if policy.stage == "N":
-            last_date = policy.enoll_date + datetimedelta(months=waiting_period)
+            last_date = policy.enroll_date + datetimedelta(months=waiting_period)
         else:
             last_date = (
                 policy.expiry_date
@@ -177,7 +175,7 @@ def add_fund(payer, product, pay_date, amount, receipt, audit_user_id, is_offlin
         pay_date=pay_date,
         pay_type=PayTypeChoices.FUNDING,
         is_offline=is_offline,
-        # audit_user_id=audit_user_id,
+        audit_user_id=audit_user_id,
     )
 
 
@@ -248,7 +246,14 @@ def _update_policy_insurees(policy):
 def _activate_insurees(policy, pay_date):
     policy.insuree_policies.filter(validity_to__isnull=True).update(
         effective_date=pay_date,
-    ) 
+    )
 
-# def handle_payment(premium):
 
+def check_unique_premium_receipt_code_within_product(code, policy_uuid):
+    from .models import Premium
+
+    policy = Policy.objects.select_related('product').filter(uuid=policy_uuid, validity_to__isnull=True).first()
+    exists = Premium.objects.filter(policy__product=policy.product, receipt=code, validity_to__isnull=True).exists()
+    if exists:
+        return [{"message": "Premium code %s already exists" % code}]
+    return []
