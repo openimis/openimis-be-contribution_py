@@ -33,6 +33,14 @@ class Premium(core_models.VersionedModel):
         null=True,
         related_name="premiums",
     )
+    transaction = models.ForeignKey(
+        'mobile_payment.Transactions',
+        models.DO_NOTHING,
+        db_column="Transaction_Id",
+        blank=True,
+        null=True,
+        related_name="premiums",
+    )
     amount = models.DecimalField(db_column="Amount", max_digits=18, decimal_places=2)
     receipt = models.CharField(db_column="Receipt", max_length=50)
     pay_date = fields.DateField(db_column="PayDate")

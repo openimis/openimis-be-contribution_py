@@ -7,6 +7,7 @@ from contribution.apps import ContributionConfig
 from contribution.models import Premium, PremiumMutation
 from payer.models import Payer
 from policy import models as policy_models
+from mobile_payment.models import Transactions
 from core.schema import OpenIMISMutation
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -81,6 +82,11 @@ def update_or_create_premium(data, user):
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
     payer = Payer.filter_queryset().filter(uuid=payer_uuid).first() if payer_uuid else None
+    transaction_uuid = data.pop("transaction_uuid") if "transaction_uuid" in data else None
+    # fetch transactions_uuid from the database and compare it with the one inputed from graphql
+    transaction = Transactions.filter_queryset().filter(uuid=transaction_uuid).first() if transaction_uuid else None
+    #checks if the transaction inputed exist in the databse if not it raise exception of not foun
+    data["transaction"] = transaction
     if premium_uuid:
         premium = Premium.objects.get(uuid=premium_uuid)
         premium.save_history()

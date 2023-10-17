@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('contribution', '0001_initial'),
         ('payer', '0001_initial'),
-        ('policy', '0004_add_medical_oficer_reading_rights'),
+        ('policy', '0003_auto_20201021_0811'),
     ]
 
     operations = [
