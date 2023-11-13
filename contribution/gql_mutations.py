@@ -7,7 +7,7 @@ from contribution.apps import ContributionConfig
 from contribution.models import Premium, PremiumMutation
 from payer.models import Payer
 from policy import models as policy_models
-from mobile_payment.models import Transactions
+from mobile_payment.models import PaymentTransaction
 from core.schema import OpenIMISMutation
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -32,6 +32,7 @@ class PremiumBase:
     pay_date = graphene.Date()
     pay_type = graphene.String(max_length=1)
     is_offline = graphene.Boolean(required=False)
+    payment_transaction_uuid = graphene.String(required=False)
     is_photo_fee = graphene.Boolean(required=False)
     action = graphene.String(required=False)
     # json_ext = graphene.types.json.JSONString(required=False)
@@ -82,11 +83,11 @@ def update_or_create_premium(data, user):
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
     payer = Payer.filter_queryset().filter(uuid=payer_uuid).first() if payer_uuid else None
-    transaction_uuid = data.pop("transaction_uuid") if "transaction_uuid" in data else None
+    payment_transaction_uuid = data.pop("payment_transaction_uuid") if "payment_transaction_uuid" in data else None
     # fetch transactions_uuid from the database and compare it with the one inputed from graphql
-    transaction = Transactions.filter_queryset().filter(uuid=transaction_uuid).first() if transaction_uuid else None
+    payment_transaction = PaymentTransaction.filter_queryset().filter(uuid=payment_transaction_uuid,status=1).first() if payment_transaction_uuid else None
     #checks if the transaction inputed exist in the databse if not it raise exception of not foun
-    data["transaction"] = transaction
+    data["payment_transaction"] = payment_transaction
     if premium_uuid:
         premium = Premium.objects.get(uuid=premium_uuid)
         premium.save_history()

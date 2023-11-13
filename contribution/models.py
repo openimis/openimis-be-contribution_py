@@ -33,10 +33,10 @@ class Premium(core_models.VersionedModel):
         null=True,
         related_name="premiums",
     )
-    transaction = models.ForeignKey(
-        'mobile_payment.Transactions',
+    payment_transaction = models.ForeignKey(
+        'mobile_payment.PaymentTransaction',
         models.DO_NOTHING,
-        db_column="Transaction_Id",
+        db_column="PaymentTransaction_Id",
         blank=True,
         null=True,
         related_name="premiums",
