@@ -50,10 +50,10 @@ def reset_premium_before_update(premium):
 
 
 def update_or_create_premium(data, user):
-    uuid = data.pop('uuid', None)
-    if uuid:
+    premium_uuid = data.pop('uuid', None)
+    if premium_uuid:
         incoming_premium_receipt = data['receipt']
-        current_premium_receipt = Premium.objects.get(uuid=uuid).receipt
+        current_premium_receipt = Premium.objects.get(uuid=premium_uuid).receipt
         if current_premium_receipt != incoming_premium_receipt:
             if check_unique_premium_receipt_code_within_product(code=data['receipt'], policy_uuid=data['policy_uuid']):
                 raise ValidationError(
@@ -77,7 +77,7 @@ def update_or_create_premium(data, user):
         raise Exception(_("policy_uuid_not_found") % (policy_uuid,))
     data["policy"] = policy
     # TODO verify that the user has access to specified payer_id
-    premium_uuid = data.pop("uuid") if "uuid" in data else None
+
     # action: enforce, suspend, wait
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
@@ -165,7 +165,7 @@ class UpdatePremiumMutation(OpenIMISMutation):
         except Exception as exc:
             return [{
                 'message': _("contribution.mutation.failed_to_update_premium") %
-                           {'id': data.get('id') if data else None},
+                {'id': data.get('id') if data else None},
                 'detail': str(exc)}
             ]
 
