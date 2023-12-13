@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 
 class PremiumGQLType(DjangoObjectType):
     client_mutation_id = graphene.String()
+    other_premiums = graphene.Float(source="other_premiums")
 
     class Meta:
         model = Premium

@@ -1,5 +1,5 @@
 import graphene
-from django.db.models import Q
+from django.db.models import Q, Sum, F
 import graphene_django_optimizer as gql_optimizer
 
 from .apps import ContributionConfig
@@ -10,7 +10,65 @@ from core.schema import signal_mutation_module_before_mutating, OrderedDjangoFil
 from .gql_queries import *  # lgtm [py/polluting-import]
 from .gql_mutations import *  # lgtm [py/polluting-import]
 from .services import check_unique_premium_receipt_code_within_product
+from graphql.language.ast import Field as ASTField
+def ast_to_dict(node, with_location=False):
+    if isinstance(node, list):
+        return [ast_to_dict(item, with_location) for item in node]
+    if node  and hasattr(node, '_fields'):
+        res = {key: ast_to_dict(getattr(node, key), with_location)
+               for key in node._fields if key != 'loc' }
+        if with_location:
+            loc = node.loc
+            if loc:
+                res['loc'] = dict(start=loc.start, end=loc.end)
+        
+        res['kind'] = node.kind if hasattr(node, 'kind') else 'Field'
+        return res
+    return node
 
+def collect_fields(node, fragments):
+    """Recursively collects fields from the AST
+    Args:
+        node (dict): A node in the AST
+        fragments (dict): Fragment definitions
+    Returns:
+        A dict mapping each field found, along with their sub fields.
+        {'name': {},
+         'sentimentsPerLanguage': {'id': {},
+                                   'name': {},
+                                   'totalSentiments': {}},
+         'slug': {}}
+    """
+
+    field = {}
+
+    if node.get('selection_set'):
+        for leaf in node['selection_set']['selections']:
+            if leaf['kind'] == 'Field':
+                field.update({
+                    leaf['name']['value']: collect_fields(leaf, fragments)
+                })
+            elif leaf['kind'] == 'FragmentSpread':
+                field.update(collect_fields(fragments[leaf['name']['value']],
+                                            fragments))
+    return field
+
+
+def get_fields(info):
+    """A convenience function to call collect_fields with info
+    Args:
+        info (ResolveInfo)
+    Returns:
+        dict: Returned from collect_fields
+    """
+
+    fragments = {}
+    node = ast_to_dict(info.field_asts[0])
+
+    for name, value in info.fragments.items():
+        fragments[name] = ast_to_dict(value)
+
+    return collect_fields(node, fragments)
 
 class Query(graphene.ObjectType):
     premiums = OrderedDjangoFilterConnectionField(
@@ -33,7 +91,10 @@ class Query(graphene.ObjectType):
         policy_uuid=graphene.String(required=True),
         description="Checks that the specified premium code is unique for a given policy."
     )
+
     def resolve_premiums(self, info, **kwargs):
+        fields = get_fields(info)
+        queryset = Premium.objects
         if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
             raise PermissionDenied(_("unauthorized"))
         filters = []
@@ -56,7 +117,9 @@ class Query(graphene.ObjectType):
                 f = "parent__" + f
             family_location = "policy__family__location__" + f
             filters.append(Q(**{family_location: parent_location}))
-        return gql_optimizer.query(Premium.objects.filter(*filters).all(), info)
+        if 'otherPremiums' in fields['edges']['node']:
+            queryset = queryset.annotate(other_premiums = Sum('policy__premiums__amount', filter = Q(~Q(policy__premiums__id=F('id')) & Q(*filter_validity(prefix='policy__premiums__'),policy__premiums__is_photo_fee=False))))
+        return gql_optimizer.query(queryset.filter(*filters).all(), info)
 
     def resolve_premiums_by_policies(self, info, **kwargs):
         if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):

@@ -63,7 +63,14 @@ class Premium(core_models.VersionedModel):
     created_date = models.DateTimeField(
         db_column="CreatedDate", default=datetime.now)
     #rowid = models.TextField(db_column='RowID', blank=True, null=True)
-
+    
+    def other_premiums(self):
+        return self.policy.aggregate(
+            other_premiums = Sum(
+                'premiums__amount',
+                filter = Q(~Q(premiums__id=self.id) & Q(*filter_validity(prefix='premiums__'),premiums__is_photo_fee=False))
+            )
+        )['other_premiums'] or 0
     class Meta:
         managed = True
         db_table = 'tblPremium'
