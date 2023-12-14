@@ -198,19 +198,21 @@ def premium_updated(premium, action):
         policy.save()
         return
 
-    if premium.amount == policy.value:
+    total_paid = policy.sum_premiums()
+
+    if total_paid == policy.value:
         policy_status_premium_paid(
             policy,
             premium.pay_date
             if premium.pay_date > policy.start_date
             else policy.start_date,
         )
-    elif premium.amount < policy.value:
+    elif total_paid < policy.value:
         # suspend already handled
         if action == PremiumUpdateActionEnum.ENFORCE.value:
             policy_status_premium_paid(policy, premium.pay_date)
         # otherwise, just leave the policy unchanged
-    elif premium.amount > policy.value:
+    elif total_paid > policy.value:
         if action != PremiumUpdateActionEnum.ENFORCE.value:
             logger.warning("action on premiums larger than the policy value")
         policy_status_premium_paid(policy, premium.pay_date)
