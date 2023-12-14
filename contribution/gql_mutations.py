@@ -50,10 +50,11 @@ def reset_premium_before_update(premium):
 
 
 def update_or_create_premium(data, user):
-    premium_uuid = data.pop('uuid', None)
-    if premium_uuid:
+    premium_uuid = data.get('uuid', None)
+    existing_premium = Premium.objects.filter(uuid=premium_uuid).first()
+    if existing_premium:
         incoming_premium_receipt = data['receipt']
-        current_premium_receipt = Premium.objects.get(uuid=premium_uuid).receipt
+        current_premium_receipt = existing_premium.receipt
         if current_premium_receipt != incoming_premium_receipt:
             if check_unique_premium_receipt_code_within_product(code=data['receipt'], policy_uuid=data['policy_uuid']):
                 raise ValidationError(
@@ -82,10 +83,12 @@ def update_or_create_premium(data, user):
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
     payer = Payer.filter_queryset().filter(uuid=payer_uuid).first() if payer_uuid else None
-
-    payment_balance = policy.value - policy.sum_premiums()
-    if not premium_uuid:
-        payment_balance -= data["amount"]
+    if existing_premium:
+        payment_balance = policy.value - existing_premium.other_premiums()
+    else:
+        payment_balance = policy.value - policy.sum_premiums()
+    payment_balance -=  data["amount"]
+    
     if payment_balance >= 0:
         policy.effective_date = data["pay_date"]
         # Start date is Enrolment Date if the policy is paid later
@@ -94,19 +97,18 @@ def update_or_create_premium(data, user):
             policy.start_date = policy.enroll_date
             policy.expiry_date = policy.start_date + days_delayed
         policy.save()
-    if premium_uuid:
-        premium = Premium.objects.get(uuid=premium_uuid)
-        premium.save_history()
-        reset_premium_before_update(premium)
-        [setattr(premium, k, v) for k, v in data.items()]
+    if existing_premium:
+        existing_premium.save_history()
+        reset_premium_before_update(existing_premium)
+        [setattr(existing_premium, k, v) for k, v in data.items()]
 
         if payer_uuid and payer:
-            premium.payer = payer
-        premium.save()
+            existing_premium.payer = payer
+        existing_premium.save()
     else:
-        premium = Premium.objects.create(**data)
-    if payer_uuid and payer:
-        premium.payer = payer
+        premium = Premium(**data)
+        if payer_uuid and payer:
+            premium.payer = payer
         premium.save()
     # Handle the policy updating
     premium_updated(premium, action)

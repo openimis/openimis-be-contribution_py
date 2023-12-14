@@ -66,6 +66,7 @@ class ContributionGQLTestCase(GraphQLTestCase):
     mutation {{
       createPremium(
         input: {{
+          uuid: "94a07513-87b9-469e-bb73-58eb717fee05"
           clientMutationId: "94a07513-87b9-469e-bb73-58eb717fee05"
           clientMutationLabel: "Create contribution"
           receipt: "ghfjgfhj"
@@ -114,6 +115,8 @@ class ContributionGQLTestCase(GraphQLTestCase):
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         content = json.loads(response.content)
         self.assertResponseNoErrors(response)
+        premium = Premium.objects.filter(uuid = "94a07513-87b9-469e-bb73-58eb717fee05").first()
+        self.assertIsNotNone(premium)
 
         
     def test_query_premium(self):
