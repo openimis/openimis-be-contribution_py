@@ -15,7 +15,7 @@ from policy.test_helpers import create_test_policy
 from contribution.models import Premium, PayTypeChoices
 
 from location.test_helpers import create_test_location, create_test_health_facility, create_test_village
-from payer.models import Payer, Funding
+from payer.models import Payer
 from product.models import Product
 import datetime
 
