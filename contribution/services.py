@@ -1,8 +1,8 @@
 import logging
 from enum import Enum
-
+from core.models import filter_validity
 from core.datetimes.shared import datetimedelta
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.transaction import atomic
 from insuree.models import Insuree, Family, InsureePolicy
 from location.apps import LocationConfig
@@ -177,6 +177,7 @@ def add_fund(payer, product, pay_date, amount, receipt, audit_user_id, is_offlin
         is_offline=is_offline,
         audit_user_id=audit_user_id,
     )
+from django.db.models import Q
 
 
 class PremiumUpdateActionEnum(Enum):
@@ -185,7 +186,7 @@ class PremiumUpdateActionEnum(Enum):
     WAIT = "WAIT"
 
 
-def premium_updated(premium, action):
+def premium_updated(premium, action=None):
     """
     if the contribution is lower than the policy value, action can override it or suspend the policy
     if it is right or too much, just activate it (enforce is still expected but just a warning)
@@ -198,19 +199,21 @@ def premium_updated(premium, action):
         policy.save()
         return
 
-    if premium.amount == policy.value:
+    policy_balance = policy.value - premium.other_premiums()
+    
+    if premium.amount  == policy_balance:
         policy_status_premium_paid(
             policy,
             premium.pay_date
             if premium.pay_date > policy.start_date
             else policy.start_date,
         )
-    elif premium.amount < policy.value:
-        # suspend already handled
+    elif premium.amount < policy_balance:
+        # suspend already handledpremium
         if action == PremiumUpdateActionEnum.ENFORCE.value:
             policy_status_premium_paid(policy, premium.pay_date)
         # otherwise, just leave the policy unchanged
-    elif premium.amount > policy.value:
+    elif premium.amount > policy_balance:
         if action != PremiumUpdateActionEnum.ENFORCE.value:
             logger.warning("action on premiums larger than the policy value")
         policy_status_premium_paid(policy, premium.pay_date)
@@ -249,11 +252,45 @@ def _activate_insurees(policy, pay_date):
     )
 
 
-def check_unique_premium_receipt_code_within_product(code, policy_uuid):
+def check_unique_premium_receipt_code_within_product(code, policy_uuid = None, policy = None):
     from .models import Premium
 
-    policy = Policy.objects.select_related('product').filter(uuid=policy_uuid, validity_to__isnull=True).first()
+    if not policy:
+        if not policy_uuid:
+            return [{"message": "missing Policy"}]
+        policy = Policy.objects.select_related('product').filter(uuid=policy_uuid, validity_to__isnull=True).first()
     exists = Premium.objects.filter(policy__product=policy.product, receipt=code, validity_to__isnull=True).exists()
     if exists:
         return [{"message": "Premium code %s already exists" % code}]
     return []
+
+
+def update_or_create_premium(premium, user, action = None):
+    
+    existing_premium = Premium.objects.filter(*filter_validity(),Q(Q(uuid=premium.uuid) |Q(id = premium.id)) ).first()
+    if existing_premium:
+        return update_premium(existing_premium, premium, user, action)
+    else:  
+        return create_premium(premium, user, action)
+        
+def  update_premium(existing_premium, premium, user, action = None):     
+    if existing_premium.receipt != premium.receipt:
+        if check_unique_premium_receipt_code_within_product(code=premium.receipt, policy=premium.policy):
+            raise ValidationError(
+                _("mutation.code_already_taken"))
+    existing_premium.save_history()
+    premium.id = existing_premium.id
+    premium.save()
+    # Handle the policy updating
+    premium_updated(premium, action)
+    return premium
+
+
+def  create_premium(premium, user, action = None):     
+    if check_unique_premium_receipt_code_within_product(code=premium.receipt, policy=premium.policy):
+        raise ValidationError(
+            _("mutation.code_already_taken"))
+    premium.save()
+    # Handle the policy updating
+    premium_updated(premium, action)
+    return premium

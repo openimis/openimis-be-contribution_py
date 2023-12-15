@@ -65,10 +65,10 @@ class Premium(core_models.VersionedModel):
     #rowid = models.TextField(db_column='RowID', blank=True, null=True)
     
     def other_premiums(self):
-        return self.policy.aggregate(
-            other_premiums = Sum(
-                'premiums__amount',
-                filter = Q(~Q(premiums__id=self.id) & Q(*filter_validity(prefix='premiums__'),premiums__is_photo_fee=False))
+        return self.policy.premiums.aggregate(
+            other_premiums = models.Sum(
+                'amount',
+                filter = models.Q(~models.Q(id=self.id) & models.Q(*core_models.filter_validity(prefix=''),is_photo_fee=False))
             )
         )['other_premiums'] or 0
     class Meta:
