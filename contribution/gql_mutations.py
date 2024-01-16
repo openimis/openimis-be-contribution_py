@@ -12,7 +12,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils.translation import gettext as _
 from core import datetime
-from .services import check_unique_premium_receipt_code_within_product
+from policy.services import PolicyService
+from .services import update_or_create_premium 
 import logging
 
 logger = logging.getLogger(__name__)
@@ -48,19 +49,9 @@ def reset_premium_before_update(premium):
     premium.reporting_id = None
 
 
-def update_or_create_premium(data, user):
-    uuid = data.pop('uuid', None)
-    if uuid:
-        incoming_premium_receipt = data['receipt']
-        current_premium_receipt = Premium.objects.get(uuid=uuid).receipt
-        if current_premium_receipt != incoming_premium_receipt:
-            if check_unique_premium_receipt_code_within_product(code=data['receipt'], policy_uuid=data['policy_uuid']):
-                raise ValidationError(
-                    _("mutation.code_already_taken"))
-    else:
-        if check_unique_premium_receipt_code_within_product(code=data['receipt'], policy_uuid=data['policy_uuid']):
-            raise ValidationError(
-                _("mutation.code_already_taken"))
+def premium_action(data, user):
+
+
     if "client_mutation_id" in data:
         data.pop('client_mutation_id')
     if "client_mutation_label" in data:
@@ -76,28 +67,16 @@ def update_or_create_premium(data, user):
         raise Exception(_("policy_uuid_not_found") % (policy_uuid,))
     data["policy"] = policy
     # TODO verify that the user has access to specified payer_id
-    premium_uuid = data.pop("uuid") if "uuid" in data else None
+
     # action: enforce, suspend, wait
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
     payer = Payer.filter_queryset().filter(uuid=payer_uuid).first() if payer_uuid else None
-    if premium_uuid:
-        premium = Premium.objects.get(uuid=premium_uuid)
-        premium.save_history()
-        reset_premium_before_update(premium)
-        [setattr(premium, k, v) for k, v in data.items()]
-
-        if payer_uuid and payer:
-            premium.payer = payer
-        premium.save()
-    else:
-        premium = Premium.objects.create(**data)
-    if payer_uuid and payer:
-        premium.payer = payer
-        premium.save()
+    data["payer"] = payer
+    premium = Premium(**data)
     # Handle the policy updating
-    premium_updated(premium, action)
-    return premium
+    
+    return update_or_create_premium(premium, user, action)
 
 
 class CreatePremiumMutation(OpenIMISMutation):
@@ -119,7 +98,7 @@ class CreatePremiumMutation(OpenIMISMutation):
             if not user.has_perms(ContributionConfig.gql_mutation_create_premiums_perms):
                 raise PermissionDenied(_("unauthorized"))
             client_mutation_id = data.get("client_mutation_id")
-            premium = update_or_create_premium(data, user)
+            premium = premium_action(data, user)
             PremiumMutation.object_mutated(user, client_mutation_id=client_mutation_id, premium=premium)
             return None
         except Exception as exc:
@@ -147,12 +126,12 @@ class UpdatePremiumMutation(OpenIMISMutation):
                     _("mutation.authentication_required"))
             if not user.has_perms(ContributionConfig.gql_mutation_update_premiums_perms):
                 raise PermissionDenied(_("unauthorized"))
-            update_or_create_premium(data, user)
+            premium_action(data, user)
             return None
         except Exception as exc:
             return [{
                 'message': _("contribution.mutation.failed_to_update_premium") %
-                           {'id': data.get('id') if data else None},
+                {'id': data.get('id') if data else None},
                 'detail': str(exc)}
             ]
 

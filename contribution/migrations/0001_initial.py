@@ -32,6 +32,9 @@ class Migration(migrations.Migration):
                 ('is_offline', models.BooleanField(blank=True, db_column='isOffline', null=True)),
                 ('reporting_id', models.IntegerField(blank=True, db_column='ReportingId', null=True)),
                 ('audit_user_id', models.IntegerField(db_column='AuditUserID')),
+                ('row_id', models.BinaryField(blank=True, db_column='RowID', null=True)),
+                ('source', models.CharField(db_column="Source", max_length=50, blank=True, null=True)),
+                ('source_version', models.CharField(db_column="SourceVersion", max_length=15, blank=True, null=True)),
             ],
             options={
                 'db_table': 'tblPremium',
