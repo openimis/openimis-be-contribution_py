@@ -15,7 +15,7 @@ from policy.test_helpers import create_test_policy
 from contribution.models import Premium, PayTypeChoices
 
 from location.test_helpers import create_test_location, create_test_health_facility, create_test_village
-from payer.models import Payer, Funding
+from payer.models import Payer
 from product.models import Product
 import datetime
 
@@ -66,6 +66,7 @@ class ContributionGQLTestCase(GraphQLTestCase):
     mutation {{
       createPremium(
         input: {{
+          uuid: "94a07513-87b9-469e-bb73-58eb717fee05"
           clientMutationId: "94a07513-87b9-469e-bb73-58eb717fee05"
           clientMutationLabel: "Create contribution"
           receipt: "ghfjgfhj"
@@ -114,6 +115,41 @@ class ContributionGQLTestCase(GraphQLTestCase):
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         content = json.loads(response.content)
         self.assertResponseNoErrors(response)
+        premium = Premium.objects.filter(uuid = "94a07513-87b9-469e-bb73-58eb717fee05",*filter_validity()).first()
+        self.assertIsNotNone(premium)
+        self.assertEquals(premium.amount, 4200)
+        #modify premium
+        
+        response = self.query(
+      f'''
+    mutation {{
+      updatePremium(
+        input: {{
+          uuid: "94a07513-87b9-469e-bb73-58eb717fee05"
+          clientMutationId: "94a07513-87b9-469e-bb73-58eb717fee32"
+          clientMutationLabel: "Create contribution"
+          receipt: "ghfjgfhj"
+          payDate: "2023-12-13"
+          payType: "C"
+          isPhotoFee: false
+          amount: "4400"
+          policyUuid: "{self.policy.uuid}"
+              }}
+      ) {{
+        clientMutationId
+        internalId
+      }}
+    }}
+
+      ''',
+            headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"},
+        )
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        content = json.loads(response.content)
+        self.assertResponseNoErrors(response)
+        premium = Premium.objects.filter(uuid = "94a07513-87b9-469e-bb73-58eb717fee05",*filter_validity()).first()
+        self.assertIsNotNone(premium)
+        self.assertEquals(premium.amount, 4400)
 
         
     def test_query_premium(self):
