@@ -3,6 +3,8 @@ from enum import Enum
 from core.models import filter_validity
 from core.datetimes.shared import datetimedelta
 from django.db.models import Sum, Q
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
 from django.db.transaction import atomic
 from insuree.models import Insuree, Family, InsureePolicy
 from location.apps import LocationConfig
@@ -265,19 +267,18 @@ def check_unique_premium_receipt_code_within_product(code, policy_uuid = None, p
     return []
 
 
-def update_or_create_premium(premium, user, action = None):
-    
-    existing_premium = Premium.objects.filter(*filter_validity(),Q(Q(uuid=premium.uuid) |Q(id = premium.id)) ).first()
+def update_or_create_premium(premium, user, action=None):
+    existing_premium = Premium.objects.filter(*filter_validity(), Q(Q(uuid=premium.uuid) | Q(id=premium.id))).first()
     if existing_premium:
         return update_premium(existing_premium, premium, user, action)
     else:  
         return create_premium(premium, user, action)
-        
-def  update_premium(existing_premium, premium, user, action = None):     
+
+
+def update_premium(existing_premium, premium, user, action = None):
     if existing_premium.receipt != premium.receipt:
         if check_unique_premium_receipt_code_within_product(code=premium.receipt, policy=premium.policy):
-            raise ValidationError(
-                _("mutation.code_already_taken"))
+            raise ValidationError(_("mutation.code_already_taken"))
     existing_premium.save_history()
     premium.id = existing_premium.id
     premium.save()
@@ -286,10 +287,9 @@ def  update_premium(existing_premium, premium, user, action = None):
     return premium
 
 
-def  create_premium(premium, user, action = None):     
+def create_premium(premium, user, action = None):
     if check_unique_premium_receipt_code_within_product(code=premium.receipt, policy=premium.policy):
-        raise ValidationError(
-            _("mutation.code_already_taken"))
+        raise ValidationError(_("mutation.code_already_taken"))
     premium.save()
     # Handle the policy updating
     premium_updated(premium, action)
