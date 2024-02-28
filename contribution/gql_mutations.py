@@ -50,8 +50,6 @@ def reset_premium_before_update(premium):
 
 
 def premium_action(data, user):
-
-
     if "client_mutation_id" in data:
         data.pop('client_mutation_id')
     if "client_mutation_label" in data:
