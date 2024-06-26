@@ -55,7 +55,7 @@ class ContributionGQLTestCase(GraphQLTestCase):
         cls.admin_dist_token = get_token(cls.admin_dist_user, DummyContext(user=cls.admin_dist_user))
         cls.payer = Payer.objects.filter(*filter_validity()).first()
         cls.product = Product.objects.filter(*filter_validity()).first()
-        cls.policy = create_test_policy(cls.product, cls.test_insuree, custom_props={'value':1000}, link=True, valid=True, check=False)
+        cls.policy = create_test_policy(cls.product, cls.test_insuree, custom_props={'value':1000}, link=True, valid=True)
 
 
         
