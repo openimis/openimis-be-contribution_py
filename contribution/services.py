@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 
 from core.datetimes.shared import datetimedelta
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.transaction import atomic
 from insuree.models import Insuree, Family, InsureePolicy
 from location.apps import LocationConfig
@@ -198,27 +198,31 @@ def premium_updated(premium, action):
         policy.save()
         return
 
-    if premium.amount == policy.value:
+    amount_other_premiums = (policy.premiums.filter(Q(validity_to__isnull=True), ~Q(id=premium.id))
+                                            .aggregate(balance=Sum("amount")))["balance"]
+    balance = policy.value - amount_other_premiums if amount_other_premiums else policy.value
+
+    if premium.amount == balance:
         policy_status_premium_paid(
             policy,
             premium.pay_date
             if premium.pay_date > policy.start_date
             else policy.start_date,
         )
-    elif premium.amount < policy.value:
+    elif premium.amount < balance:
         # suspend already handled
         if action == PremiumUpdateActionEnum.ENFORCE.value:
             policy_status_premium_paid(policy, premium.pay_date)
         # otherwise, just leave the policy unchanged
-    elif premium.amount > policy.value:
+    elif premium.amount > balance:
         if action != PremiumUpdateActionEnum.ENFORCE.value:
             logger.warning("action on premiums larger than the policy value")
         policy_status_premium_paid(policy, premium.pay_date)
     else:
         logger.warning(
-            "The comparison between premium amount %s and policy value %s failed",
+            "The comparison between premium amount %s and policy balance %s failed",
             premium.amount,
-            policy.value,
+            balance,
         )
         raise Exception("Invalid combination or premium and policy amounts")
 
