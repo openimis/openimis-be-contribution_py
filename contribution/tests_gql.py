@@ -1,19 +1,13 @@
-import base64
 import json
-from dataclasses import dataclass
 
-from core.models import User, filter_validity
+from core.models import filter_validity
 from core.test_helpers import create_test_interactive_user, create_clerk_role
 from django.conf import settings
-from graphene_django.utils.testing import GraphQLTestCase
 from graphql_jwt.shortcuts import get_token
-from location.models import Location
 from location.test_helpers import (
-  create_test_location,
-  assign_user_districts,
-  create_basic_test_locations,
-  create_test_health_facility,
-  create_test_village
+    assign_user_districts,
+    create_basic_test_locations,
+    create_test_village
 )
 from rest_framework import status
 from insuree.test_helpers import create_test_insuree
@@ -21,8 +15,6 @@ from policy.test_helpers import create_test_policy
 from product.test_helpers import create_test_product
 from payer.test_helpers import create_test_payer
 from contribution.models import Premium, PayTypeChoices
-from payer.models import Payer
-from product.models import Product
 import datetime
 
 # from openIMIS import schema
@@ -43,12 +35,18 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
     policy = None
     product = None
     payer = None
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         create_basic_test_locations()
         cls.test_village = create_test_village()
-        cls.test_insuree = create_test_insuree(with_family=True, is_head=True, custom_props={'current_village':cls.test_village}, family_custom_props={'location':cls.test_village})
+        cls.test_insuree = create_test_insuree(
+            with_family=True,
+            is_head=True,
+            custom_props={'current_village': cls.test_village},
+            family_custom_props={'location': cls.test_village}
+        )
         cls.admin_user = create_test_interactive_user(username="testLocationAdmin")
         cls.admin_token = get_token(cls.admin_user, DummyContext(user=cls.admin_user))
         clerk_role = create_clerk_role()
@@ -59,14 +57,17 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
         cls.admin_dist_token = get_token(cls.admin_dist_user, DummyContext(user=cls.admin_dist_user))
         cls.payer = create_test_payer()
         cls.product = create_test_product("ELI1")
-        cls.policy = create_test_policy(cls.product, cls.test_insuree, custom_props={'value':1000}, link=True, valid=True)
+        cls.policy = create_test_policy(
+            cls.product,
+            cls.test_insuree,
+            custom_props={'value': 1000},
+            link=True,
+            valid=True
+        )
 
-
-        
     def test_add_funding(self):
-      
         response = self.query(
-      f'''
+            f'''
     mutation {{
       createPremium(
         input: {{
@@ -91,17 +92,17 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
         )
 
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        content = json.loads(response.content)
+        json.loads(response.content)
 
         self.assertResponseNoErrors(response)
-        #wait 
-        
-        response = self.query('''
-        
+        # Wait
+
+        response = self.query(
+            '''
         {
         mutationLogs(clientMutationId: "94a07513-87b9-469e-bb73-58eb717fee05")
         {
-            
+
         pageInfo { hasNextPage, hasPreviousPage, startCursor, endCursor}
         edges
         {
@@ -112,20 +113,20 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
         }
         }
         }
-        
+
         ''',
             headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"})
-        
+
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        content = json.loads(response.content)
+        json.loads(response.content)
         self.assertResponseNoErrors(response)
-        premium = Premium.objects.filter(uuid = "94a07513-87b9-469e-bb73-58eb717fee05",*filter_validity()).first()
+        premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *filter_validity()).first()
         self.assertIsNotNone(premium)
         self.assertEquals(premium.amount, 4200)
-        #modify premium
-        
+        # Modify premium
+
         response = self.query(
-      f'''
+            f'''
     mutation {{
       updatePremium(
         input: {{
@@ -149,41 +150,38 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
             headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"},
         )
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        content = json.loads(response.content)
+        json.loads(response.content)
         self.assertResponseNoErrors(response)
-        premium = Premium.objects.filter(uuid = "94a07513-87b9-469e-bb73-58eb717fee05",*filter_validity()).first()
+        premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *filter_validity()).first()
         self.assertIsNotNone(premium)
         self.assertEquals(premium.amount, 4400)
 
-        
     def test_query_premium(self):
         premium = Premium.objects.create(**{
-              'payer':self.payer,
-              'pay_date':datetime.datetime.now(),
-              'amount':"5000",
-              'receipt':"test premium 1",
-              'policy':self.policy,
-              'pay_type':PayTypeChoices.BANK_TRANSFER,
-              'audit_user_id':self.admin_user.id_for_audit
-          }
-          )
-      
+            'payer': self.payer,
+            'pay_date': datetime.datetime.now(),
+            'amount': "5000",
+            'receipt': "test premium 1",
+            'policy': self.policy,
+            'pay_type': PayTypeChoices.BANK_TRANSFER,
+            'audit_user_id': self.admin_user.id_for_audit
+        })
+
         premium = Premium.objects.create(**{
-                'payer':self.payer,
-                'pay_date':datetime.datetime.now(),
-                'amount':"10000",
-                'receipt':"test premium 2",
-                'policy':self.policy,
-                'pay_type':PayTypeChoices.BANK_TRANSFER,
-                'audit_user_id':self.admin_user.id_for_audit
-            }
-            )
+            'payer': self.payer,
+            'pay_date': datetime.datetime.now(),
+            'amount': "10000",
+            'receipt': "test premium 2",
+            'policy': self.policy,
+            'pay_type': PayTypeChoices.BANK_TRANSFER,
+            'audit_user_id': self.admin_user.id_for_audit
+        })
         response = self.query(
-          f'''
-           {{ 
+            f'''
+           {{
             premiums(uuid: "{premium.uuid}")
             {{
-              
+
           pageInfo {{ hasNextPage, hasPreviousPage, startCursor, endCursor}}
           edges
           {{
@@ -195,22 +193,20 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
             }}
           }}
           }}
-          '''
-          ,headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"})
+          ''', headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"})
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        content = json.loads(response.content)
+        json.loads(response.content)
 
         self.assertResponseNoErrors(response)
 
-        
     def test_query_premiums(self):
         response = self.query(
-        '''
+            '''
         {
           premiums(first: 10,orderBy: ["-payDate"])
           {
             totalCount
-            
+
         pageInfo { hasNextPage, hasPreviousPage, startCursor, endCursor}
         edges
         {
@@ -220,13 +216,12 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
           }
         }
           }
-        }
-        ''',
+        }''',
             headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"},
-            variables={ 'first':10, 'payerId':self.payer.uuid},
+            variables={'first': 10, 'payerId': self.payer.uuid},
         )
 
         self.assertEquals(response.status_code, status.HTTP_200_OK)
-        content = json.loads(response.content)
+        json.loads(response.content)
 
         self.assertResponseNoErrors(response)

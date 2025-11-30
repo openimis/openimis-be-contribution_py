@@ -179,7 +179,6 @@ def add_fund(payer, product, pay_date, amount, receipt, audit_user_id, is_offlin
         is_offline=is_offline,
         audit_user_id=audit_user_id,
     )
-from django.db.models import Q
 
 
 class PremiumUpdateActionEnum(Enum):
@@ -202,8 +201,7 @@ def premium_updated(premium, action=None):
         return
 
     policy_balance = policy.value - premium.other_premiums()
-    
-    if premium.amount  == policy_balance:
+    if premium.amount == policy_balance:
         policy_status_premium_paid(
             policy,
             premium.pay_date
@@ -228,8 +226,8 @@ def premium_updated(premium, action=None):
         raise Exception("Invalid combination or premium and policy amounts")
 
     if policy.status is not None and (
-        policy.effective_date == premium.pay_date
-        or policy.effective_date == policy.start_date
+        policy.effective_date == premium.pay_date or
+        policy.effective_date == policy.start_date
     ):
         # Enforcing policy
         if policy.offline or not premium.is_offline:
@@ -254,7 +252,7 @@ def _activate_insurees(policy, pay_date):
     )
 
 
-def check_unique_premium_receipt_code_within_product(code, policy_uuid = None, policy = None):
+def check_unique_premium_receipt_code_within_product(code, policy_uuid=None, policy=None):
     from .models import Premium
 
     if not policy:
@@ -271,11 +269,11 @@ def update_or_create_premium(premium, user, action=None):
     existing_premium = Premium.objects.filter(*filter_validity(), Q(Q(uuid=premium.uuid) | Q(id=premium.id))).first()
     if existing_premium:
         return update_premium(existing_premium, premium, user, action)
-    else:  
+    else:
         return create_premium(premium, user, action)
 
 
-def update_premium(existing_premium, premium, user, action = None):
+def update_premium(existing_premium, premium, user, action=None):
     if existing_premium.receipt != premium.receipt:
         if check_unique_premium_receipt_code_within_product(code=premium.receipt, policy=premium.policy):
             raise ValidationError(_("mutation.code_already_taken"))
@@ -287,7 +285,7 @@ def update_premium(existing_premium, premium, user, action = None):
     return premium
 
 
-def create_premium(premium, user, action = None):
+def create_premium(premium, user, action=None):
     if check_unique_premium_receipt_code_within_product(code=premium.receipt, policy=premium.policy):
         raise ValidationError(_("mutation.code_already_taken"))
     premium.save()
