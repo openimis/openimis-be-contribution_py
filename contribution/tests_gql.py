@@ -120,7 +120,7 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
         self.assertResponseNoErrors(response)
-        premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *filter_validity()).first()
+        premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *Premium.filter_validity()).first()
         self.assertIsNotNone(premium)
         self.assertEquals(premium.amount, 4200)
         # Modify premium
@@ -152,7 +152,7 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
         self.assertResponseNoErrors(response)
-        premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *filter_validity()).first()
+        premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *Premium.filter_validity()).first()
         self.assertIsNotNone(premium)
         self.assertEquals(premium.amount, 4400)
 

@@ -121,14 +121,14 @@ class Query(graphene.ObjectType):
             family_location = "policy__family__location__" + f
             filters.append(Q(**{family_location: parent_location}))
         if 'otherPremiums' in fields['edges']['node']:
-            queryset = queryset.annotate(other_premiums = Sum('policy__premiums__amount', filter = Q(~Q(policy__premiums__id=F('id')) & Q(*filter_validity(prefix='policy__premiums__'),policy__premiums__is_photo_fee=False))))
+            queryset = queryset.annotate(other_premiums = Sum('policy__premiums__amount', filter = Q(~Q(policy__premiums__id=F('id')) & Q(*Premium.filter_validity(prefix='policy__premiums__'),policy__premiums__is_photo_fee=False))))
         return gql_optimizer.query(queryset.filter(*filters).all(), info)
 
     def resolve_premiums_by_policies(self, info, **kwargs):
         if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
             raise PermissionDenied(_("unauthorized"))
         policies = policy_models.Policy.objects.values_list('id').filter(Q(uuid__in=kwargs.get('policy_uuids')))
-        return Premium.objects.filter(Q(policy_id__in=policies), *filter_validity(**kwargs))
+        return Premium.objects.filter(Q(policy_id__in=policies), *Premium.filter_validity(**kwargs))
 
     def resolve_validate_premium_code(self, info, **kwargs):
         if not info.context.user.has_perms(ContributionConfig.gql_query_premiums_perms):
