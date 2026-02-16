@@ -91,7 +91,7 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
             headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"},
         )
 
-        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
 
         self.assertResponseNoErrors(response)
@@ -117,12 +117,12 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
         ''',
             headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"})
 
-        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
         self.assertResponseNoErrors(response)
         premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *filter_validity()).first()
         self.assertIsNotNone(premium)
-        self.assertEquals(premium.amount, 4200)
+        self.assertEqual(premium.amount, 4200)
         # Modify premium
 
         response = self.query(
@@ -149,12 +149,12 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
       ''',
             headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"},
         )
-        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
         self.assertResponseNoErrors(response)
         premium = Premium.objects.filter(uuid="94a07513-87b9-469e-bb73-58eb717fee05", *filter_validity()).first()
         self.assertIsNotNone(premium)
-        self.assertEquals(premium.amount, 4400)
+        self.assertEqual(premium.amount, 4400)
 
     def test_query_premium(self):
         premium = Premium.objects.create(**{
@@ -194,7 +194,7 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
           }}
           }}
           ''', headers={"HTTP_AUTHORIZATION": f"Bearer {self.admin_token}"})
-        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
 
         self.assertResponseNoErrors(response)
@@ -221,7 +221,7 @@ class ContributionGQLTestCase(openIMISGraphQLTestCase):
             variables={'first': 10, 'payerId': self.payer.uuid},
         )
 
-        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json.loads(response.content)
 
         self.assertResponseNoErrors(response)
