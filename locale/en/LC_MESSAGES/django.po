@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-08 00:54+0100\n"
+"POT-Creation-Date: 2026-09-17 16:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,40 +17,69 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: contribution/gql_mutations.py:60
-msgid "policy_uuid_required"
-msgstr "The policy UUID is required"
-
-#: contribution/gql_mutations.py:63
-msgid "policy_uuid_not_found"
-msgstr "The policy UUID was not found"
-
-#: contribution/gql_mutations.py:108 contribution/gql_mutations.py:137
-msgid "mutation.authentication_required"
-msgstr "User needs to be authenticated for this operation"
-
-#: contribution/gql_mutations.py:110 contribution/gql_mutations.py:139
-#: contribution/gql_mutations.py:163 contribution/schema.py:32
-#: contribution/schema.py:54
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_details_mutations.py:30
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_details_mutations.py:47
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_details_mutations.py:63
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_details_mutations.py:78
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_mutations.py:57
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_mutations.py:75
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_mutations.py:91
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_mutations.py:165
+#: contribution_plan/gql/gql_mutations/contribution_plan_mutations.py:50
+#: contribution_plan/gql/gql_mutations/contribution_plan_mutations.py:68
+#: contribution_plan/gql/gql_mutations/contribution_plan_mutations.py:106
+#: contribution_plan/gql/gql_mutations/contribution_plan_mutations.py:121
+#: contribution_plan/gql/gql_types.py:22 contribution_plan/gql/gql_types.py:28
+#: contribution_plan/gql/gql_types.py:34 contribution_plan/gql/gql_types.py:40
+#: contribution_plan/gql/gql_types.py:129
+#: contribution_plan/gql/gql_types.py:135
+#: contribution_plan/gql/gql_types.py:141
 msgid "unauthorized"
 msgstr "User not authorized for this operation"
 
-#: contribution/gql_mutations.py:117
-msgid "contribution.mutation.failed_to_create_premium"
-msgstr "Failed to create the premium"
+#: contribution_plan/gql/gql_mutations/contribution_plan_bundle_mutations.py:59
+msgid "mutation.cpb_code_duplicated"
+msgstr ""
 
-#: contribution/gql_mutations.py:144
-msgid "contribution.mutation.failed_to_update_premium"
-msgstr "Failed to update the premium %(id)s"
+#: contribution_plan/gql/gql_mutations/contribution_plan_mutations.py:52
+msgid "mutation.cp_code_duplicated"
+msgstr ""
 
-#: contribution/gql_mutations.py:173
-msgid "contribution.validation.id_does_not_exist"
-msgstr "Contribution with id %(id)s does not exist"
+#: contribution_plan/gql/gql_mutations/payment_plan_mutations.py:46
+#: contribution_plan/gql/gql_mutations/payment_plan_mutations.py:64
+#: contribution_plan/gql/gql_mutations/payment_plan_mutations.py:104
+#: contribution_plan/gql/gql_mutations/payment_plan_mutations.py:119
+msgid "mutation.authentication_required"
+msgstr "User needs to be authenticated for this operation"
 
-#: contribution/gql_mutations.py:191
-msgid "contribution.mutation.failed_to_delete_premium"
-msgstr "Failed to delete premium %(uuid)s"
+#: contribution_plan/gql/gql_mutations/payment_plan_mutations.py:48
+#: contribution_plan/gql/gql_mutations/payment_plan_mutations.py:67
+#, fuzzy
+#| msgid "mutation.authentication_required"
+msgid "mutation.payment_plan_code_duplicated"
+msgstr "User needs to be authenticated for this operation"
 
-#: contribution/schema.py:67
-msgid "premium.mutation.failed_to_delete_premium"
-msgstr "Failed to delete premium %(uuid)s"
+#: contribution_plan/gql/gql_mutations/validation.py:15
+msgid "mutation.date_valid_to_before_date_valid_from"
+msgstr ""
+
+#~ msgid "policy_uuid_required"
+#~ msgstr "The policy UUID is required"
+
+#~ msgid "policy_uuid_not_found"
+#~ msgstr "The policy UUID was not found"
+
+#~ msgid "contribution.mutation.failed_to_create_premium"
+#~ msgstr "Failed to create the premium"
+
+#~ msgid "contribution.mutation.failed_to_update_premium"
+#~ msgstr "Failed to update the premium %(id)s"
+
+#~ msgid "contribution.validation.id_does_not_exist"
+#~ msgstr "Contribution with id %(id)s does not exist"
+
+#~ msgid "contribution.mutation.failed_to_delete_premium"
+#~ msgstr "Failed to delete premium %(uuid)s"
+
+#~ msgid "premium.mutation.failed_to_delete_premium"
+#~ msgstr "Failed to delete premium %(uuid)s"
