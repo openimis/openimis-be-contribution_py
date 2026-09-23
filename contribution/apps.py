@@ -1,22 +1,49 @@
 from django.apps import AppConfig
 
+from core.rights_declaration import RightsDeclaration
+
 MODULE_NAME = "contribution"
 
+
+# Droits, par entite puis par action. L'entite est la cotisation (Premium).
+DJANGO_PERMS = {
+    "premium": {
+        "query": ("contribution.view_premium", 101301),
+        "create": ("contribution.add_premium", 101302),
+        "update": ("contribution.change_premium", 101303),
+        "delete": ("contribution.delete_premium", 101304),
+    },
+}
+
+_PERM_CFG = {
+    "gql_query_premiums_perms": ("premium", "query"),
+    "gql_mutation_create_premiums_perms": ("premium", "create"),
+    "gql_mutation_update_premiums_perms": ("premium", "update"),
+    "gql_mutation_delete_premiums_perms": ("premium", "delete"),
+}
+
+RIGHTS = RightsDeclaration(MODULE_NAME, DJANGO_PERMS, _PERM_CFG)
+
+perms = RIGHTS.perms
+django_perms = RIGHTS.django_perm_names
+configured_perms = RIGHTS.configured
+require = RIGHTS.require
+
+
 DEFAULT_CFG = {
-    "gql_query_premiums_perms": ["101301"],
-    "gql_mutation_create_premiums_perms": ["101302"],
-    "gql_mutation_update_premiums_perms": ["101303"],
-    "gql_mutation_delete_premiums_perms": ["101304"],
 }
 
 
 class ContributionConfig(AppConfig):
     name = MODULE_NAME
 
-    gql_query_premiums_perms = []
-    gql_mutation_create_premiums_perms = []
-    gql_mutation_update_premiums_perms = []
-    gql_mutation_delete_premiums_perms = []
+    # Droits: constantes, plus surchargeables. Ils ne passent plus par le
+    # DEFAULT_CFG ni par ready(): `ModuleConfiguration.get_or_default` ignore
+    # desormais toute cle `_perms` stockee en base.
+    gql_query_premiums_perms = RIGHTS.perms("premium", "query")
+    gql_mutation_create_premiums_perms = RIGHTS.perms("premium", "create")
+    gql_mutation_update_premiums_perms = RIGHTS.perms("premium", "update")
+    gql_mutation_delete_premiums_perms = RIGHTS.perms("premium", "delete")
 
     def __load_config(self, cfg):
         for field in cfg:
