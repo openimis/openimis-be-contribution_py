@@ -5,7 +5,7 @@ from core.rights_declaration import RightsDeclaration
 MODULE_NAME = "contribution"
 
 
-# Droits, par entite puis par action. L'entite est la cotisation (Premium).
+# Rights, by entity then by action. The entity is the contribution (Premium).
 DJANGO_PERMS = {
     "premium": {
         "query": ("contribution.view_premium", 101301),
@@ -37,9 +37,9 @@ DEFAULT_CFG = {
 class ContributionConfig(AppConfig):
     name = MODULE_NAME
 
-    # Droits: constantes, plus surchargeables. Ils ne passent plus par le
-    # DEFAULT_CFG ni par ready(): `ModuleConfiguration.get_or_default` ignore
-    # desormais toute cle `_perms` stockee en base.
+    # Rights: constants, no longer overridable. They go neither through DEFAULT_CFG
+    # nor through ready(): `ModuleConfiguration.get_or_default` now ignores any
+    # `_perms` key stored in the database.
     gql_query_premiums_perms = RIGHTS.perms("premium", "query")
     gql_mutation_create_premiums_perms = RIGHTS.perms("premium", "create")
     gql_mutation_update_premiums_perms = RIGHTS.perms("premium", "update")
