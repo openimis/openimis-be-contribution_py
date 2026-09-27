@@ -7,9 +7,10 @@ from core import prefix_filterset, ExtendedConnection
 from policy.schema import PolicyGQLType
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import gettext as _
+from core.gql import ScopedQuerysetMixin
 
 
-class PremiumGQLType(DjangoObjectType):
+class PremiumGQLType(ScopedQuerysetMixin, DjangoObjectType):
     client_mutation_id = graphene.String()
     other_premiums = graphene.Float(source="other_premiums")
 

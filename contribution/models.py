@@ -18,6 +18,8 @@ class PayTypeChoices(models.TextChoices):
 
 
 class Premium(core_models.VersionedModel):
+    row_scope = core_models.ParentScope("policy")
+
     id = models.AutoField(db_column="PremiumId", primary_key=True)
     uuid = models.CharField(
         db_column="PremiumUUID", max_length=36, default=uuid.uuid4, unique=True
