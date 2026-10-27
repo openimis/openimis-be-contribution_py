@@ -1,4 +1,4 @@
-from django.db.models import Q, Sum, F, Count
+from django.db.models import Q, Sum, F, Count, Case, When
 
 from contribution.models import Premium
 from insuree.models import InsureePolicy
@@ -4414,6 +4414,9 @@ ALL_REGIONS = -42
 ALL_DISTRICTS = -4242
 ALL_PRODUCTS = -424242
 
+LOCATION_LEVELS = ["R", "D", "W", "V"]
+FAMILY_LOCATION = "policy__family__location"
+NO_DISTRICT = {"code": "", "name": ""}
 CATEGORY_PHOTO = "P"
 CATEGORY_REGISTRATION = "R"
 CATEGORY_ASSEMBLY = "A"
@@ -4478,10 +4481,10 @@ def split_premium_in_categories(premium: dict, subtotals: dict, product_info_map
     product_id = premium["product_id"]
     registration_lump_sum = product_info_mapping[product_id]["registration_lump_sum"]
     registration_fee = coalesce_or_0(product_info_mapping[product_id]["registration_fee"])
-    registration_fees = registration_fee * family_members_in_policy[premium["policy_id"]]
+    registration_fees = registration_fee * family_members_in_policy.get(premium["policy_id"], 0)
     assembly_lump_sum = product_info_mapping[product_id]["assembly_lump_sum"]
     assembly_fee = coalesce_or_0(product_info_mapping[product_id]["assembly_fee"])
-    assembly_fees = assembly_fee * family_members_in_policy[premium["policy_id"]]
+    assembly_fees = assembly_fee * family_members_in_policy.get(premium["policy_id"], 0)
 
     # 1) checking if there is any type of registration
     registration_amount = coalesce_or_0(registration_lump_sum, registration_fees)
@@ -4542,11 +4545,13 @@ def format_final_data(subtotals: dict, district_info: dict, product_info: dict):
     subtotals.pop("total")
     for district_id, district_values in subtotals.items():
         district_total = subtotals[district_id].pop("total")
+        # Families located at region level (or without location) have no district
+        district = district_info.get(district_id, NO_DISTRICT)
         for product_id, product_values in district_values.items():
             new_data_line = {
-                "district_name": district_info[district_id]["name"],
+                "district_name": district["name"],
                 "product_name": product_info[product_id]["name"],
-                "district_code": district_info[district_id]["code"],
+                "district_code": district["code"],
                 "product_code": product_info[product_id]["code"],
                 "product_total_r": product_values[CATEGORY_REGISTRATION],
                 "product_total_a": product_values[CATEGORY_ASSEMBLY],
@@ -4623,9 +4628,9 @@ def payment_category_overview_query(user,
     if product_id != ALL_PRODUCTS:
         search_filters &= Q(policy__product_id=product_id)
     if district_id != ALL_DISTRICTS:
-        search_filters &= Q(policy__family__location__parent__parent_id=district_id)
+        search_filters &= family_location_ancestor_filter("D", district_id)
     elif region_id != ALL_REGIONS:
-        search_filters &= Q(policy__family__location__parent__parent__parent_id=region_id)
+        search_filters &= family_location_ancestor_filter("R", region_id)
 
     subtotals = {
         "total": generate_subtotal()
@@ -4653,10 +4658,34 @@ def fetch_premiums(search_filters: Q, is_photo_fee: bool):
     return Premium.objects.filter(search_filters, is_photo_fee=is_photo_fee) \
                           .values("policy_id",
                                   product_id=F("policy__product"),
-                                  district_id=F("policy__family__location__parent__parent"),
-                                  district_code=F("policy__family__location__parent__parent__code")) \
+                                  district_id=family_location_ancestor("D", "id"),
+                                  district_code=family_location_ancestor("D", "code")) \
                           .annotate(amount=Sum("amount")) \
                           .order_by("district_code", "policy")
+
+
+def family_location_ancestor_paths(ancestor_type: str):
+    # Families are not always located at village level, so the number of "parent" hops to reach
+    # the ancestor of the requested type depends on the type of the family location.
+    # Yields (family_location_type, path_to_the_ancestor) for each level at or below the ancestor
+    ancestor_level = LOCATION_LEVELS.index(ancestor_type)
+    for hops, location_type in enumerate(LOCATION_LEVELS[ancestor_level:]):
+        yield location_type, FAMILY_LOCATION + "__parent" * hops
+
+
+def family_location_ancestor_filter(ancestor_type: str, ancestor_id: int):
+    # Filters the premiums whose family location is (or is below) the given ancestor
+    filters = Q()
+    for location_type, path in family_location_ancestor_paths(ancestor_type):
+        filters |= Q(**{f"{FAMILY_LOCATION}__type": location_type, f"{path}_id": ancestor_id})
+    return filters
+
+
+def family_location_ancestor(ancestor_type: str, field: str):
+    # Returns the field of the family location ancestor of the given type (None if the family is above it)
+    return Case(*[When(**{f"{FAMILY_LOCATION}__type": location_type}, then=F(f"{path}__{field}"))
+                  for location_type, path in family_location_ancestor_paths(ancestor_type)],
+                default=None)
 
 
 def prepare_family_members_info():
