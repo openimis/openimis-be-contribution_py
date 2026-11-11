@@ -12,6 +12,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils.translation import gettext as _
 from core import datetime
+from policy.apps import PolicyConfig
 from policy.services import PolicyService
 from .services import update_or_create_premium 
 import logging
@@ -57,19 +58,28 @@ def premium_action(data, user):
     now = datetime.datetime.now()
     data['audit_user_id'] = user.id_for_audit
     data['validity_from'] = now
+    # The premium to update is identified by its uuid, resolved in the caller's
+    # scope; a database id from the client would let it overwrite any premium.
+    data.pop("id", None)
     policy_uuid = data.pop("policy_uuid") if "policy_uuid" in data else None
     if not policy_uuid:
         raise Exception(_("policy_uuid_required"))
-    policy = Policy.filter_queryset(None).filter(uuid=policy_uuid).first()
+    policy = Policy.get_queryset(Policy.objects.filter(uuid=policy_uuid), user).first()
     if not policy:
-        raise Exception(_("policy_uuid_not_found") % (policy_uuid,))
+        raise Exception(_("Policy %s was not found.") % (policy_uuid,))
     data["policy"] = policy
-    # TODO verify that the user has access to specified payer_id
 
     # action: enforce, suspend, wait
     action = data.pop("action") if "action" in data else None
     payer_uuid = data.pop("payer_uuid") if "payer_uuid" in data else None
-    payer = Payer.filter_queryset().filter(uuid=payer_uuid).first() if payer_uuid else None
+    # Payer.get_queryset ignores the queryset it is given when row security is
+    # on, so the uuid and validity filters are applied to its result.
+    payer = (
+        Payer.get_queryset(None, user).filter(uuid=payer_uuid, validity_to__isnull=True).first()
+        if payer_uuid else None
+    )
+    if payer_uuid and not payer:
+        raise Exception(_("Payer %s was not found.") % (payer_uuid,))
     data["payer"] = payer
     premium = Premium(**data)
     # Handle the policy updating
@@ -150,9 +160,9 @@ class DeletePremiumsMutation(OpenIMISMutation):
             raise PermissionDenied(_("unauthorized"))
         errors = []
         for premium_uuid in data["uuids"]:
-            premium = Premium.objects \
-                .filter(uuid=premium_uuid) \
-                .first()
+            premium = Premium.get_queryset(
+                Premium.objects.filter(uuid=premium_uuid), user
+            ).first()
             if premium is None:
                 errors.append({
                     'title': premium_uuid,
@@ -181,10 +191,25 @@ def set_premium_deleted(premium):
 
 
 def on_policy_mutation(sender, **kwargs):
+    """Delete the premiums of the policies a DeletePoliciesMutation removes.
+
+    The signal runs before the mutation itself checks anything, so this handler
+    checks for itself: the caller must hold the policy delete right, and only
+    the policies they may see are touched.
+    """
     errors = []
     if kwargs.get("mutation_class") == 'DeletePoliciesMutation':
+        user = kwargs.get("user")
+        if (
+            user is None
+            or getattr(user, "is_anonymous", True)
+            or not user.has_perms(PolicyConfig.gql_mutation_delete_policies_perms)
+        ):
+            return errors
         uuids = kwargs['data'].get('uuids', [])
-        policies = policy_models.Policy.objects.prefetch_related("premiums").filter(uuid__in=uuids).all()
+        policies = policy_models.Policy.get_queryset(
+            policy_models.Policy.objects.filter(uuid__in=uuids), user
+        ).prefetch_related("premiums")
         for policy in policies:
             for premium in policy.premiums.all():
                 errors += set_premium_deleted(premium)

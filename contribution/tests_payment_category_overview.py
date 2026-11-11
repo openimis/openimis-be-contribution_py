@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from contribution.reports.payment_category_overview import payment_category_overview_query
 from contribution.test_helpers import create_test_premium
+from core.test_helpers import create_test_interactive_user
 from insuree.models import InsureePolicy
 from insuree.test_helpers import create_test_insuree
 from location.test_helpers import create_test_village
@@ -23,9 +24,11 @@ class PaymentCategoryOverviewTest(TestCase):
         self.ward = self.village.parent
         self.district = self.ward.parent
         self.region = self.district.parent
+        # The report is scoped to the premiums its user may see; an admin sees all.
+        self.user = create_test_interactive_user(username="PCOAdmin")
 
     def _run(self, product, **kwargs):
-        return payment_category_overview_query(None,
+        return payment_category_overview_query(self.user,
                                                date_start=PAY_DATE,
                                                date_end=PAY_DATE,
                                                requested_product_id=product.id,

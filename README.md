@@ -11,6 +11,9 @@ This repository holds the files of the openIMIS Backend Contribution reference m
 ## ORM mapping:
 * tblPremium > Premium (without Payer relationship)
 
+## Row security
+* `Premium`: as visible as its policy (`ParentScope("policy")`). The create/update/delete mutations, the `DeletePoliciesMutation` handler and the reports (premium collection, contributions distribution, payment category overview) only reach premiums of policies the user may see. The `id` mutation input is ignored: an existing premium is found by `uuid`.
+
 ## Listened Django Signals
 None
 

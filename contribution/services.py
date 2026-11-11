@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 from core.models import filter_validity
 from core.datetimes.shared import datetimedelta
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from django.db.transaction import atomic
@@ -266,7 +266,21 @@ def check_unique_premium_receipt_code_within_product(code, policy_uuid=None, pol
 
 
 def update_or_create_premium(premium, user, action=None):
-    existing_premium = Premium.objects.filter(*Premium.filter_validity(), Q(Q(uuid=premium.uuid) | Q(id=premium.id))).first()
+    """Update the premium with ``premium.uuid`` if there is one, create it otherwise.
+
+    The premium to update is looked up by uuid among the premiums ``user`` may
+    see. ``premium.id`` is never trusted: it comes from the caller, and saving
+    an instance with a foreign primary key would overwrite that row, whatever
+    policy it belongs to.
+    """
+    premium.id = None
+    existing_premium = None
+    if premium.uuid:
+        candidates = Premium.objects.filter(*Premium.filter_validity(), uuid=premium.uuid)
+        existing_premium = Premium.get_queryset(candidates, user).first()
+        if existing_premium is None and candidates.exists():
+            # The uuid is taken by a premium outside the caller's scope.
+            raise ValidationError(_("Premium %s was not found.") % (premium.uuid,))
     if existing_premium:
         return update_premium(existing_premium, premium, user, action)
     else:
