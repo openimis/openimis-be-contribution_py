@@ -3871,10 +3871,12 @@ def prepare_location_info(product: Product):
     return location_info
 
 
-def fetch_collected_contributions(search_filters: Q, start_date: AdDate, end_date: AdDate):
+def fetch_collected_contributions(user, search_filters: Q, start_date: AdDate, end_date: AdDate):
     # Returns the total amount that was collected in a given time period.
+    # Only the premiums of policies the user may see (OP-3322).
+    scoped_premiums = Premium.get_queryset(Premium.objects.all(), user)
     total_collected = Decimal(0.00)
-    premiums = Premium.objects.filter(search_filters,
+    premiums = scoped_premiums.filter(search_filters,
                                       ~Q(policy__status=1),
                                       pay_date__range=[start_date, end_date]) \
                               .values(product_id=F("policy__product_id")) \
@@ -3885,12 +3887,14 @@ def fetch_collected_contributions(search_filters: Q, start_date: AdDate, end_dat
     return total_collected
 
 
-def fetch_not_allocated_contributions(search_filters: Q, start_date: AdDate, end_date: AdDate):
+def fetch_not_allocated_contributions(user, search_filters: Q, start_date: AdDate, end_date: AdDate):
     # Returns the total amount that was not allocated in a given time period.
     # 'Not allocated' means that the amount was collected for a policy that will start in the future
     # (after the given time period).
+    # Only the premiums of policies the user may see (OP-3322).
+    scoped_premiums = Premium.get_queryset(Premium.objects.all(), user)
     total_not_allocated = Decimal(0.00)
-    premiums = Premium.objects.filter(search_filters,
+    premiums = scoped_premiums.filter(search_filters,
                                       Q(Q(policy__status=1) | Q(pay_date__gt=F("policy__expiry_date"))),
                                       pay_date__range=[start_date, end_date]) \
                               .values(product_id=F("policy__product_id")) \
@@ -3901,11 +3905,13 @@ def fetch_not_allocated_contributions(search_filters: Q, start_date: AdDate, end
     return total_not_allocated
 
 
-def fetch_allocated_contributions(search_filters: Q, start_date: AdDate, end_date: AdDate):
+def fetch_allocated_contributions(user, search_filters: Q, start_date: AdDate, end_date: AdDate):
     # Returns the total amount that was allocated in a given time period.
     # 'Allocated' means the proportionally calculated amount that was paid for the given time period.
+    # Only the premiums of policies the user may see (OP-3322).
+    scoped_premiums = Premium.get_queryset(Premium.objects.all(), user)
     total_allocated = Decimal(0.00)
-    contributions = Premium.objects.filter(search_filters,
+    contributions = scoped_premiums.filter(search_filters,
                                            ~Q(policy__status=1),
                                            Q(pay_date__lte=F("policy__expiry_date")),
                                            policy__expiry_date__gte=start_date,
@@ -3996,9 +4002,9 @@ def contributions_distribution_query(user,
 
         start_date, end_date = calculate_start_end_month_dates(year, current_month)
 
-        collected = fetch_collected_contributions(search_filters, start_date, end_date)
-        not_allocated = fetch_not_allocated_contributions(search_filters, start_date, end_date)
-        allocated = fetch_allocated_contributions(search_filters, start_date, end_date)
+        collected = fetch_collected_contributions(user, search_filters, start_date, end_date)
+        not_allocated = fetch_not_allocated_contributions(user, search_filters, start_date, end_date)
+        allocated = fetch_allocated_contributions(user, search_filters, start_date, end_date)
 
         new_data_element = {
             "month_nbr": current_month,

@@ -4413,7 +4413,9 @@ def premium_collection_query(user,
     elif region_id != ALL_REGIONS:
         search_filters &= Q(policy__family__location__parent__parent__parent_id=region_id)
 
-    premiums = Premium.objects.filter(search_filters) \
+    # Only the premiums of policies the user may see (OP-3322).
+    scoped_premiums = Premium.get_queryset(Premium.objects.all(), user)
+    premiums = scoped_premiums.filter(search_filters) \
                               .values("pay_date",
                                       "pay_type",
                                       district_code=F("policy__family__location__parent__parent__code"),

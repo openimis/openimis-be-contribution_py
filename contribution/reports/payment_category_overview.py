@@ -4636,7 +4636,7 @@ def payment_category_overview_query(user,
         "total": generate_subtotal()
     }
     # Photo fees are separated from the other premiums as they can be identified with the is_photo_fee field
-    photo_fees = fetch_premiums(search_filters, is_photo_fee=True)
+    photo_fees = fetch_premiums(user, search_filters, is_photo_fee=True)
     for photo_fee in photo_fees:
         dispatch_subtotals(photo_fee["district_id"],
                            photo_fee["product_id"],
@@ -4644,7 +4644,7 @@ def payment_category_overview_query(user,
                            subtotals,
                            CATEGORY_PHOTO)
 
-    other_premiums = fetch_premiums(search_filters, is_photo_fee=False)
+    other_premiums = fetch_premiums(user, search_filters, is_photo_fee=False)
     for premium in other_premiums:
         # Other premiums cover 3 various payment categories
         split_premium_in_categories(premium, subtotals, product_info_mapping, total_family_members_in_policy)
@@ -4654,8 +4654,10 @@ def payment_category_overview_query(user,
     return report_data
 
 
-def fetch_premiums(search_filters: Q, is_photo_fee: bool):
-    return Premium.objects.filter(search_filters, is_photo_fee=is_photo_fee) \
+def fetch_premiums(user, search_filters: Q, is_photo_fee: bool):
+    # Only the premiums of policies the user may see (OP-3322).
+    scoped_premiums = Premium.get_queryset(Premium.objects.all(), user)
+    return scoped_premiums.filter(search_filters, is_photo_fee=is_photo_fee) \
                           .values("policy_id",
                                   product_id=F("policy__product"),
                                   district_id=family_location_ancestor("D", "id"),
