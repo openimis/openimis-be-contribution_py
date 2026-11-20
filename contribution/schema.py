@@ -12,19 +12,19 @@ from core.services import wait_for_mutation
 from .gql_queries import *  # lgtm [py/polluting-import]
 from .gql_mutations import *  # lgtm [py/polluting-import]
 from .services import check_unique_premium_receipt_code_within_product
-from graphql.language.ast import Field as ASTField
+from graphql.language import Node as ASTNode
 def ast_to_dict(node, with_location=False):
-    if isinstance(node, list):
+    if isinstance(node, (list, tuple)):
         return [ast_to_dict(item, with_location) for item in node]
-    if node  and hasattr(node, '_fields'):
+    if isinstance(node, ASTNode):
         res = {key: ast_to_dict(getattr(node, key), with_location)
-               for key in node._fields if key != 'loc' }
+               for key in node.keys if key != 'loc'}
         if with_location:
             loc = node.loc
             if loc:
                 res['loc'] = dict(start=loc.start, end=loc.end)
         
-        res['kind'] = node.kind if hasattr(node, 'kind') else 'Field'
+        res['kind'] = node.kind
         return res
     return node
 
@@ -46,11 +46,11 @@ def collect_fields(node, fragments):
 
     if node.get('selection_set'):
         for leaf in node['selection_set']['selections']:
-            if leaf['kind'] == 'Field':
+            if leaf['kind'] == 'field':
                 field.update({
                     leaf['name']['value']: collect_fields(leaf, fragments)
                 })
-            elif leaf['kind'] == 'FragmentSpread':
+            elif leaf['kind'] == 'fragment_spread':
                 field.update(collect_fields(fragments[leaf['name']['value']],
                                             fragments))
     return field
@@ -65,7 +65,7 @@ def get_fields(info):
     """
 
     fragments = {}
-    node = ast_to_dict(info.field_asts[0])
+    node = ast_to_dict(info.field_nodes[0])
 
     for name, value in info.fragments.items():
         fragments[name] = ast_to_dict(value)
